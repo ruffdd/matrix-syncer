@@ -1,0 +1,4 @@
+services:
+  ldap-bot:
+    build:
+      context: . 
