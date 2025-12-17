@@ -1,2 +1,6 @@
 #build files
 main
+
+# Added by cargo
+
+/target
