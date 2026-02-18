@@ -1,6 +1,9 @@
 #build files
 main
 
+## passwords
+config.json
+
 # Added by cargo
 
 /target

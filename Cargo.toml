@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.101"
+json = "0.12.4"
 matrix-sdk = "0.16.0"
+tokio = {version="1.49.0",features = ["full"]}
+url = "2.5.8"
 
 [[bin]]
 name = "matrix-ldap-bridge-bot"
