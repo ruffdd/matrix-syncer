@@ -3,10 +3,7 @@ use std::fs;
 use url::Url;
 
 use matrix_sdk::{
-    Client, SessionMeta,
-    authentication::matrix::MatrixSession,
-    config::SyncSettings,
-    ruma::{UserId, events::room::{encrypted::CiphertextInfo, message::SyncRoomMessageEvent}, user_id},
+    AuthSession, Client, SessionMeta, SessionTokens, authentication::matrix::MatrixSession, config::SyncSettings, ruma::{DeviceId, UserId, events::room::{encrypted::CiphertextInfo, message::SyncRoomMessageEvent}, user_id}
 };
 
 #[tokio::main]
@@ -21,24 +18,19 @@ async fn main() -> anyhow::Result<()> {
     let redirect_url ="https://matrix.stuvus.uni-stuttgart.de/_synapse/client/oidc/callback";
 
     let user = UserId::parse(config["username"].as_str().expect("no username in config")).unwrap();
+    let device= config["deviceID"].as_str().expect("No Device ID found in config").into();
+    let access_token:String= config["token"].as_str().expect("Could not get token from config").to_string();
     let client = Client::builder()
         .server_name(user.server_name())
         .build()
         .await?;
 
-    let callback_url = Url::parse(client.matrix_auth().get_sso_login_url(redirect_url, None).await?.as_str()).unwrap();
+    let matrix_session = MatrixSession{
+        meta: SessionMeta { user_id: user, device_id: device },
+        tokens: SessionTokens { access_token: access_token, refresh_token: None }
+    };
 
-    println!("{}",callback_url.as_str());
-
-    // First we need to log in.
-    // client.matrix_auth().login_(config["token"].as_str().expect("No username provided in config")).send().await?;
-    // let response = client.matrix_auth()
-    //     .login_with_sso_callback(callback_url)
-    //     .unwrap()
-    //     .initial_device_display_name("My app")
-    //     .await
-    //     .unwrap();
-    
+    client.restore_session(AuthSession::Matrix( matrix_session)).await?;
 
     client.add_event_handler(|ev: SyncRoomMessageEvent| async move {
         println!("Received a message {:?}", ev);
