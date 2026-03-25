@@ -1,14 +1,21 @@
-use std::fs;
+use std::{fs, ops::Index};
 
+use JsonValue::Array;
 use json::JsonValue;
+use json::parse;
 use matrix_sdk::ruma::{
     DeviceId, OwnedDeviceId, OwnedUserId, UserId, api::client::reporting::report_user,
 };
 
+pub struct RoomMapping {
+    room_id: String,
+    user_ids: String,
+}
 pub struct Config {
     pub matrix_user_name: OwnedUserId,
     pub matrix_token: String,
     pub matrix_deviceID: OwnedDeviceId,
+    pub mappings: Vec<RoomMapping>,
 }
 
 fn get_string_value(config_file: &JsonValue, path: &str) -> String {
@@ -31,10 +38,21 @@ pub fn load_config() -> Config {
     )
     .unwrap();
 
+    let temp_mappings: Vec<RoomMapping> = config["mapping"]
+        .members()
+        .map(|mapping| {
+            return RoomMapping {
+                room_id: get_string_value( mapping,"room-id"),
+                user_ids: get_string_value( mapping,"user-ids"),
+            };
+        })
+        .collect();
+
     return Config {
         matrix_user_name: UserId::parse(get_string_value(&config, "matrix/username"))
             .expect("not a valid user id"),
         matrix_token: get_string_value(&config, "matrix/token"),
         matrix_deviceID: get_string_value(&config, "matrix/deviceID").into(),
+        mappings: temp_mappings
     };
 }
