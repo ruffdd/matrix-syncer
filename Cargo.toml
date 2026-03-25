@@ -12,4 +12,4 @@ url = "2.5.8"
 
 [[bin]]
 name = "matrix-ldap-bridge-bot"
-path = "main.rs"
+path = "src/main.rs"
