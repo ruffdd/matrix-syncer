@@ -3,14 +3,18 @@ use std::{fs, ops::Index};
 use JsonValue::Array;
 use json::JsonValue;
 use json::parse;
+use matrix_sdk::ruma::OwnedRoomId;
+use matrix_sdk::ruma::api::client::user_directory::search_users::v3::User;
+use matrix_sdk::ruma::events::policy::rule::user;
 use matrix_sdk::ruma::{
-    DeviceId, OwnedDeviceId, OwnedUserId, UserId, api::client::reporting::report_user,
+    DeviceId, OwnedDeviceId, OwnedUserId, UserId, api::client::reporting::report_user,RoomId
 };
-
+#[derive(Clone)]
 pub struct RoomMapping {
-    room_id: String,
-    user_ids: String,
+    pub user_ids: Vec<OwnedUserId>,
+    pub room_id: OwnedRoomId,
 }
+#[derive(Clone)]
 pub struct Config {
     pub matrix_user_name: OwnedUserId,
     pub matrix_token: String,
@@ -42,8 +46,10 @@ pub fn load_config() -> Config {
         .members()
         .map(|mapping| {
             return RoomMapping {
-                room_id: get_string_value( mapping,"room-id"),
-                user_ids: get_string_value( mapping,"user-ids"),
+                room_id: RoomId::parse(get_string_value( mapping,"room-id")).expect("Could not convert to RoomId"),
+                user_ids: mapping["user-ids"].members().map(|user_id|{
+                    return UserId::parse(user_id.as_str().expect("")).expect("could no convert to user id");
+                }).collect() 
             };
         })
         .collect();

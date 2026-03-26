@@ -1,12 +1,13 @@
+use anyhow::Ok;
 use json;
-use std::fs;
+use std::{fs, sync::Arc};
 
 use matrix_sdk::{
     AuthSession, Client, Room, SessionMeta, SessionTokens,
     authentication::matrix::MatrixSession,
     config::SyncSettings,
     ruma::{
-        UserId,
+        RoomId, UserId,
         events::{
             AnySyncStateEvent,
             call::invite::CallInviteEvent,
@@ -21,26 +22,36 @@ use matrix_sdk::{
 
 mod config;
 
-async fn event_handler(ev: SyncRoomMessageEvent, room: Room) {
-    println!("{}", room.room_id());
+async fn event_handler(ev: SyncRoomMessageEvent, room: Room,config:Arc<config::Config>,client:Arc<Client>) {
+    // println!("{}", room.room_id());
+    for mapping in &config.mappings {
+        for user in &mapping.user_ids {
+            let room = client.get_room(&mapping.room_id);
+            if room.is_none() {
+                println!("could not get room {}", mapping.room_id.as_str())
+            } else {
+                room.unwrap().invite_user_by_id(&user);
+            }
+        }
+    }
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config = config::load_config();
+    let config = Arc::new(config::load_config());
 
-    let client = Client::builder()
+    let client = Arc::new(Client::builder()
         .server_name(config.matrix_user_name.server_name())
         .build()
-        .await?;
+        .await?);
 
     let matrix_session = MatrixSession {
         meta: SessionMeta {
-            user_id: config.matrix_user_name,
-            device_id: config.matrix_deviceID,
+            user_id: config.matrix_user_name.clone(),
+            device_id: config.matrix_deviceID.clone(),
         },
         tokens: SessionTokens {
-            access_token: config.matrix_token,
+            access_token: config.matrix_token.clone(),
             refresh_token: None,
         },
     };
@@ -50,7 +61,10 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     println!("logged in as: {}", client.user_id().expect(""));
 
-    client.add_event_handler(event_handler);
+
+    client.add_event_handler(| event,room| {
+        event_handler(event, room,config.clone(),client.clone())
+    });
 
     // Syncing is important to synchronize the client state with the server.
     // This method will never return unless there is an error.
