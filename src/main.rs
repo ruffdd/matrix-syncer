@@ -7,7 +7,7 @@ use matrix_sdk::{
     authentication::matrix::MatrixSession,
     config::SyncSettings,
     ruma::{
-        RoomId, UserId,
+        OwnedRoomId, RoomId, UserId,
         events::{
             AnySyncStateEvent,
             call::invite::CallInviteEvent,
@@ -17,33 +17,52 @@ use matrix_sdk::{
                 third_party_invite::SyncRoomThirdPartyInviteEvent,
             },
         },
+        presence::PresenceState,
     },
 };
 
 mod config;
 
-async fn event_handler(ev: SyncRoomMessageEvent, room: Room,config:Arc<config::Config>,client:Arc<Client>) {
+fn room_name(room: &Room) -> String {
+    return match room.name() {
+        Some(o) => o,
+        None => room.room_id().as_str().to_string(),
+    };
+}
+
+async fn event_handler(ev: SyncRoomMessageEvent, room: Room, config: config::Config) {
     // println!("{}", room.room_id());
     for mapping in &config.mappings {
-        for user in &mapping.user_ids {
-            let room = client.get_room(&mapping.room_id);
-            if room.is_none() {
-                println!("could not get room {}", mapping.room_id.as_str())
-            } else {
-                room.unwrap().invite_user_by_id(&user);
+        if mapping.room_id != room.room_id() {
+            println!("Found room {} which has no mapping", room_name(&room));
+            continue;
+        } else {
+            for user in &mapping.user_ids {
+                match room.invite_user_by_id(&user).await {
+                    Err(e) => println!(
+                        "Error ({}) while inviting {} into {} ",
+                        e,
+                        user,
+                        room_name(&room)
+                    ),
+                    Result::Ok(()) => println!("Invited {} into {} ", user, room_name(&room)),
+                }
             }
+            break;
         }
     }
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config = Arc::new(config::load_config());
+    let config = config::load_config();
 
-    let client = Arc::new(Client::builder()
-        .server_name(config.matrix_user_name.server_name())
-        .build()
-        .await?);
+    let client = Arc::new(
+        Client::builder()
+            .server_name(config.matrix_user_name.server_name())
+            .build()
+            .await?,
+    );
 
     let matrix_session = MatrixSession {
         meta: SessionMeta {
@@ -61,14 +80,16 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     println!("logged in as: {}", client.user_id().expect(""));
 
-
-    client.add_event_handler(| event,room| {
-        event_handler(event, room,config.clone(),client.clone())
-    });
-
+    {
+        let event_config = config.clone();
+        client.add_event_handler(|event, room| event_handler(event, room, event_config));
+    }
     // Syncing is important to synchronize the client state with the server.
     // This method will never return unless there is an error.
-    client.sync(SyncSettings::default()).await?;
+    let mut sync_settings = SyncSettings::new();
+    sync_settings = sync_settings.full_state(true);
+    sync_settings = sync_settings.set_presence(PresenceState::Offline);
+    client.sync_once(sync_settings).await?;
 
     Ok(())
 }
