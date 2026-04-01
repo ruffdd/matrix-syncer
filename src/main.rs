@@ -1,14 +1,13 @@
-use anyhow::Ok;
+use anyhow::{Error, Ok};
 use json;
-use std::{fs, sync::Arc};
+use std::{fmt::Debug, fs, sync::Arc};
 
 use matrix_sdk::{
     AuthSession, Client, Room, SessionMeta, SessionTokens,
     authentication::matrix::MatrixSession,
     config::SyncSettings,
     ruma::{
-        OwnedRoomId, RoomId, UserId,
-        events::{
+        OwnedRoomId, OwnedUserId, RoomId, UserId, api::client::{account::change_password::v3::Request, membership::{self, invite_user::v3::InvitationRecipient}}, events::{
             AnySyncStateEvent,
             call::invite::CallInviteEvent,
             room::{
@@ -16,8 +15,7 @@ use matrix_sdk::{
                 message::{OriginalSyncRoomMessageEvent, SyncRoomMessageEvent},
                 third_party_invite::SyncRoomThirdPartyInviteEvent,
             },
-        },
-        presence::PresenceState,
+        }, presence::PresenceState
     },
 };
 
@@ -90,6 +88,22 @@ async fn main() -> anyhow::Result<()> {
     sync_settings = sync_settings.full_state(true);
     sync_settings = sync_settings.set_presence(PresenceState::Offline);
     client.sync_once(sync_settings).await?;
+
+    for mapping in &config.mappings {
+        for user in &mapping.user_ids {
+            let request:membership::invite_user::v3::Request  = membership::invite_user::v3::Request::new(mapping.room_id.clone(),InvitationRecipient::UserId { user_id: user.clone() });
+                    // ,
+                    // reason:Option::Some( String::from("Automatic invited"))
+                // };
+            let response = client.send(request).await;
+            let mut mes:String = String::from("");
+            if(response.is_err()){
+                mes = response.expect_err("").to_string();
+            } 
+            println!("Invited user {} into {}:{}", user.as_str(),mapping.room_id.as_str(),mes);
+        }
+    }
+
 
     Ok(())
 }
