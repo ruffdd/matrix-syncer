@@ -1,12 +1,13 @@
 # Editors and IDs
+
+## Visual studio
 .vscode/
 
-#build files
+#Rust
+
+## Build
 main
-
-## passwords
-config.json
-
-# Added by cargo
-
 /target
+
+# run data
+config.json
