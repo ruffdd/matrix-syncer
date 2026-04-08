@@ -1,0 +1,13 @@
+# Editors and IDs
+
+## Visual studio
+.vscode/
+
+#Rust
+
+## Build
+main
+/target
+
+# run data
+config.json
