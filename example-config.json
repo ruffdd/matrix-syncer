@@ -1,0 +1,15 @@
+{
+    "matrix": {
+        "username": "@mmuster:example.com",
+        "token": "ABCDEFGHIJKLMNOPQ",
+        "deviceID": "ABCDEFGHIJKLMNOPQ"
+    },
+    "mapping":[
+        {
+            "room-id":"!abcdefHIJ:example.de",
+            "user-ids":[
+                "@emuster:example.com"
+            ]
+        }
+    ]
+}
