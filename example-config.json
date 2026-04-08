@@ -6,7 +6,7 @@
     },
     "mapping":[
         {
-            "room-id":"!abcdefHIJ:stuvus.de",
+            "room-id":"!abcdefHIJ:example.de",
             "user-ids":[
                 "@emuster:stuvus.de"
             ]
