@@ -1,0 +1,15 @@
+{
+    "matrix": {
+        "username": "@mmuster:stuvus.de",
+        "token": "ABCDEFGHIJKLMNOPQ",
+        "deviceID": "ABCDEFGHIJKLMNOPQ"
+    },
+    "mapping":[
+        {
+            "room-id":"!abcdefHIJ:stuvus.de",
+            "user-ids":[
+                "@emuster:stuvus.de"
+            ]
+        }
+    ]
+}
