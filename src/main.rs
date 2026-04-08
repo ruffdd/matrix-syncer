@@ -19,6 +19,7 @@ use matrix_sdk::{
     },
 };
 
+
 mod config;
 
 fn room_name(room: &Room) -> String {
