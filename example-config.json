@@ -1,6 +1,6 @@
 {
     "matrix": {
-        "username": "@mmuster:stuvus.de",
+        "username": "@mmuster:example.com",
         "token": "ABCDEFGHIJKLMNOPQ",
         "deviceID": "ABCDEFGHIJKLMNOPQ"
     },
@@ -8,7 +8,7 @@
         {
             "room-id":"!abcdefHIJ:example.de",
             "user-ids":[
-                "@emuster:stuvus.de"
+                "@emuster:example.com"
             ]
         }
     ]
