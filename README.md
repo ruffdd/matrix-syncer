@@ -1,1 +1,1 @@
-# Matrix syncer
+# Matrix User syncer
